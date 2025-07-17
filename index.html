@@ -54,11 +54,12 @@
 
     async function fetchLatest() {
       try {
-        const res = await fetch('https://api.marksix.data806.com/latest');
+        const res = await fetch('https://hk.marksixapi.com/latest');
         const obj = await res.json();
         const info = obj.data;
-        document.getElementById('latestInfo').textContent = `第 ${info.expect} 期 - ${info.time}`;
-        document.getElementById('latestNums').innerHTML = info.openCode.split(',').map(n => `<span class="number-box">${n}</span>`).join('');
+        document.getElementById('latestInfo').textContent = `第 ${info.expect || info.issue || '-'} 期 - ${info.time || ''}`;
+        const nums = info.nums || (info.openCode ? info.openCode.split(',') : []);
+        document.getElementById('latestNums').innerHTML = nums.map(n => `<span class="number-box">${n}</span>`).join('');
       } catch (e) {
         document.getElementById('latestInfo').textContent = '加载失败';
       }
@@ -66,9 +67,9 @@
 
     async function fetchHistory() {
       try {
-        const res = await fetch('https://api.marksix.data806.com/history?count=100');
+        const res = await fetch('https://hk.marksixapi.com/history?limit=100');
         const obj = await res.json();
-        historyData = obj.data.map(e => e.openCode.split(',').map(Number));
+        historyData = obj.data.map(e => e.nums.map(Number));
         drawChart();
       } catch (e) {
         alert('历史数据获取失败');
