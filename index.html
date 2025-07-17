@@ -1,74 +1,75 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>澳門六合彩 開獎推薦</title>
+  <title>六合彩热号冷号分析与推荐</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family:sans-serif; max-width:720px; margin:auto; background:#f8f8f8; padding:20px; }
-    .card { background:#fff; padding:16px; border-radius:8px; box-shadow:0 0 5px rgba(0,0,0,0.1); margin:20px 0; }
-    .btn { background:#007BFF; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-top:10px; }
-    .btn:hover { background:#0056b3; }
-    .ball { display:inline-block; width:36px; height:36px; line-height:36px; text-align:center; border-radius:50%; color:#fff; margin:4px; font-weight:bold; }
-    .r { background:red; } .g { background:green; } .b { background:blue; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; }
+    .nums { font-size: 18px; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .num { background: #007bff; color: white; border-radius: 6px; padding: 5px 12px; }
+    .recommend { background: #28a745; }
   </style>
 </head>
 <body>
-  <h1>澳門六合彩開獎 & 推薦</h1>
-
+  <h1>六合彩数据分析</h1>
   <div class="card">
-    <h2>📌 最新開獎（來自 macaujc.com）</h2>
-    <button class="btn" onclick="loadLatest()">獲取開獎號碼</button>
-    <div id="latest" style="margin-top:10px;color:#333">--</div>
+    <h2>🔥 热门号码 (Hot)</h2>
+    <div class="nums" id="hot"></div>
+  </div>
+  <div class="card">
+    <h2>❄️ 冷门号码 (Cold)</h2>
+    <div class="nums" id="cold"></div>
+  </div>
+  <div class="card">
+    <h2>🎯 推荐号码 (Recommended)</h2>
+    <div class="nums" id="recommend"></div>
   </div>
 
-  <div class="card">
-    <h2>✨ 推薦號碼</h2>
-    <button class="btn" onclick="generate()">生成推薦</button>
-    <div><strong>熱號推薦：</strong><div id="hot"></div></div>
-    <div><strong>冷熱混合：</strong><div id="mix"></div></div>
-    <div><strong>隨機推薦：</strong><div id="random"></div></div>
-  </div>
+<script>
+(async function() {
+  const res = await fetch("https://www.nhkjc.com/apinewhk/historyperiod");
+  const data = await res.json();
+  const balls = [];
 
-  <script>
-    const proxy = "https://frosty-fire-4725.jonbaby1126.workers.dev/";
-    let latestNums = [];
+  data.slice(0, 100).forEach(item => {
+    item.balls.split("-").forEach(b => balls.push(parseInt(b)));
+  });
 
-    async function loadLatest() {
-      const el = document.getElementById('latest');
-      el.textContent = "加載中...";
-      try {
-        const html = await fetch(proxy).then(r => r.text());
-        const matches = [...html.matchAll(/<font[^>]*?>(\d{2})<\/font>/g)].map(m => m[1]);
-        if (matches.length < 7) throw new Error("號碼不足");
-        latestNums = matches.slice(0, 7);
-        el.innerHTML = latestNums.map((n, i) => {
-          const color = i < 6 ? (i%3==0?'r':(i%3==1?'g':'b')) : 'r';
-          return `<span class="ball ${color}">${n}</span>`;
-        }).join('');
-      } catch (e) {
-        el.textContent = "獲取失敗，請稍後重試。";
-      }
-    }
+  const freq = Array(50).fill(0);
+  balls.forEach(n => freq[n]++);
 
-    function generate() {
-      if (latestNums.length < 6) return alert("請先獲取開獎號碼");
-      const freq = {};
-      for (let i = 1; i <= 49; i++) freq[i.toString().padStart(2, '0')] = 0;
-      latestNums.forEach(n => freq[n]++);
-      const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).map(e => e[0]);
-      const hot = sorted.slice(0, 6);
-      const cold = sorted.slice(-6);
-      const mix = [...hot.slice(0, 3), ...cold.slice(0, 3)];
-      const rand = [];
-      while (rand.length < 6) {
-        const r = Math.floor(Math.random() * 49 + 1).toString().padStart(2, '0');
-        if (!rand.includes(r)) rand.push(r);
-      }
-      document.getElementById("hot").innerHTML = hot.map(n => `<span class="ball g">${n}</span>`).join('');
-      document.getElementById("mix").innerHTML = mix.map(n => `<span class="ball r">${n}</span>`).join('');
-      document.getElementById("random").innerHTML = rand.map(n => `<span class="ball b">${n}</span>`).join('');
-    }
-  </script>
+  const numbered = freq.map((count, num) => ({num, count})).slice(1);
+  const hot = numbered.sort((a,b)=>b.count-a.count).slice(0, 10).map(x=>x.num);
+  const cold = numbered.sort((a,b)=>a.count-b.count).slice(0, 10).map(x=>x.num);
+
+  function render(ids, nums) {
+    const box = document.getElementById(ids);
+    nums.forEach(n => {
+      const span = document.createElement('span');
+      span.className = 'num';
+      span.textContent = n.toString().padStart(2,'0');
+      box.appendChild(span);
+    });
+  }
+
+  render("hot", hot);
+  render("cold", cold);
+
+  // 推荐号：4 热 + 3 冷，随机后取前 6 个
+  const sample = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
+  const recom = sample(hot, 4).concat(sample(cold, 3)).sort(() => Math.random()-0.5).slice(0,6).sort((a,b)=>a-b);
+
+  const rbox = document.getElementById("recommend");
+  recom.forEach(n => {
+    const span = document.createElement('span');
+    span.className = 'num recommend';
+    span.textContent = n.toString().padStart(2,'0');
+    rbox.appendChild(span);
+  });
+})();
+</script>
 </body>
 </html>
