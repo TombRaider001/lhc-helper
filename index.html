@@ -74,9 +74,11 @@
 <script>
 let historyData = [], historyIssues = [];
 
+const proxy = url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+
 async function fetchLatest(){
   try {
-    const res = await fetch('https://hk.marksixapi.com/latest');
+    const res = await fetch(proxy('https://hk.marksixapi.com/latest'));
     const info = (await res.json()).data;
     document.getElementById('latestInfo').textContent = `第 ${info.issue} 期 - ${info.time}`;
     document.getElementById('latestNums').innerHTML = info.nums.map(n => `<span class="number-box" onclick="copyNum(${n})">${n}</span>`).join('');
@@ -87,7 +89,7 @@ async function fetchLatest(){
 
 async function fetchHistory(){
   try {
-    const res = await fetch('https://hk.marksixapi.com/history?limit=100');
+    const res = await fetch(proxy('https://hk.marksixapi.com/history?limit=100'));
     const arr = (await res.json()).data;
     historyData = arr.map(e => e.nums.map(Number));
     historyIssues = arr.map(e => e.issue);
