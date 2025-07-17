@@ -3,75 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>六合彩開獎 + 推薦工具</title>
+  <title>澳門六合彩 開獎推薦</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; max-width:720px; margin:auto; }
-    h1, h2 { text-align:center; }
-    .card { background:white; padding:16px; border-radius:8px; margin:20px 0; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    .btn { padding:10px 20px; background:#007BFF; color:#fff; border:none; border-radius:5px; cursor:pointer; margin:10px 0; }
-    .btn-green { background:#28A745 }
-    .ball { display:inline-block; width:36px;height:36px;line-height:36px;background:#2196F3;color:#fff;border-radius:50%;margin:4px; }
+    body { font-family:sans-serif; max-width:720px; margin:auto; background:#f8f8f8; padding:20px; }
+    .card { background:#fff; padding:16px; border-radius:8px; box-shadow:0 0 5px rgba(0,0,0,0.1); margin:20px 0; }
+    .btn { background:#007BFF; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-top:10px; }
+    .btn:hover { background:#0056b3; }
+    .ball { display:inline-block; width:36px; height:36px; line-height:36px; text-align:center; border-radius:50%; color:#fff; margin:4px; font-weight:bold; }
+    .r { background:red; } .g { background:green; } .b { background:blue; }
   </style>
 </head>
 <body>
-
-  <h1>六合彩 開獎 & 推薦</h1>
+  <h1>澳門六合彩開獎 & 推薦</h1>
 
   <div class="card">
-    <h2>📌 最新開獎號碼</h2>
-    <button class="btn" onclick="loadLatest()">點擊獲取</button>
-    <div id="latest" style="margin-top:10px;">-- 尚未獲取 --</div>
+    <h2>📌 最新開獎（來自 macaujc.com）</h2>
+    <button class="btn" onclick="loadLatest()">獲取開獎號碼</button>
+    <div id="latest" style="margin-top:10px;color:#333">--</div>
   </div>
 
   <div class="card">
     <h2>✨ 推薦號碼</h2>
-    <button class="btn-green" onclick="generate()">生成推薦</button>
-    <div><strong>熱號：</strong><div id="hot"></div></div>
+    <button class="btn" onclick="generate()">生成推薦</button>
+    <div><strong>熱號推薦：</strong><div id="hot"></div></div>
     <div><strong>冷熱混合：</strong><div id="mix"></div></div>
     <div><strong>隨機推薦：</strong><div id="random"></div></div>
   </div>
 
   <script>
-    let historyNums = [];
+    const proxy = "https://your-cloudflare-worker-url.workers.dev";
+    let latestNums = [];
 
-    async function loadLatest(){
-      const out = document.getElementById('latest');
-      out.textContent = '加載中...';
+    async function loadLatest() {
+      const el = document.getElementById('latest');
+      el.textContent = "加載中...";
       try {
-        const proxy = 'https://corsproxy.io/?' + encodeURIComponent('https://www.pilio.idv.tw/ltohk/list.asp');
-        const res = await fetch(proxy);
-        const html = await res.text();
-
-        const regex = /<font color="#0000ff" size="2"><b>(\d{2})<\/b><\/font><\/td>/g;
-        const nums = [...html.matchAll(regex)].map(m => m[1]).slice(0,7);
-        historyNums = nums; // 只用最新一期数据
-        
-        out.innerHTML = nums.map(n=>`<span class="ball">${n}</span>`).join(' ');
-      } catch {
-        out.textContent = '獲取失敗，請稍後重試';
+        const html = await fetch(proxy).then(r => r.text());
+        const matches = [...html.matchAll(/<font[^>]*?>(\d{2})<\/font>/g)].map(m => m[1]);
+        if (matches.length < 7) throw new Error("號碼不足");
+        latestNums = matches.slice(0, 7);
+        el.innerHTML = latestNums.map((n, i) => {
+          const color = i < 6 ? (i%3==0?'r':(i%3==1?'g':'b')) : 'r';
+          return `<span class="ball ${color}">${n}</span>`;
+        }).join('');
+      } catch (e) {
+        el.textContent = "獲取失敗，請稍後重試。";
       }
     }
 
-    function generate(){
-      if (historyNums.length < 7) return alert('請先獲取最新開獎號碼');
+    function generate() {
+      if (latestNums.length < 6) return alert("請先獲取開獎號碼");
       const freq = {};
-      historyNums.forEach(n=> freq[n] = (freq[n]||0)+1);
-      for(let i=1;i<=49;i++){ const k=String(i).padStart(2,'0'); if(!freq[k]) freq[k]=0; }
-      const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
-      const hot = sorted.slice(0,6);
+      for (let i = 1; i <= 49; i++) freq[i.toString().padStart(2, '0')] = 0;
+      latestNums.forEach(n => freq[n]++);
+      const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+      const hot = sorted.slice(0, 6);
       const cold = sorted.slice(-6);
-      const mix = [...hot.slice(0,3),...cold.slice(0,3)];
-      const rand=[];
-      while(rand.length<6){
-        let r = String(Math.floor(Math.random()*49+1)).padStart(2,'0');
-        if(!rand.includes(r)) rand.push(r);
+      const mix = [...hot.slice(0, 3), ...cold.slice(0, 3)];
+      const rand = [];
+      while (rand.length < 6) {
+        const r = Math.floor(Math.random() * 49 + 1).toString().padStart(2, '0');
+        if (!rand.includes(r)) rand.push(r);
       }
-
-      document.getElementById('hot').innerHTML = hot.map(n=>`<span class="ball">${n}</span>`).join(' ');
-      document.getElementById('mix').innerHTML = mix.map(n=>`<span class="ball">${n}</span>`).join(' ');
-      document.getElementById('random').innerHTML = rand.map(n=>`<span class="ball">${n}</span>`).join(' ');
+      document.getElementById("hot").innerHTML = hot.map(n => `<span class="ball g">${n}</span>`).join('');
+      document.getElementById("mix").innerHTML = mix.map(n => `<span class="ball r">${n}</span>`).join('');
+      document.getElementById("random").innerHTML = rand.map(n => `<span class="ball b">${n}</span>`).join('');
     }
   </script>
-
 </body>
 </html>
