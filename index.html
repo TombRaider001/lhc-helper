@@ -1,138 +1,165 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>六合彩推荐工具</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      background: #f8f9fa;
-      padding: 30px;
-    }
+    body { background: #f8f9fa; padding: 20px; }
     .number-box {
       display: inline-block;
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       line-height: 40px;
       text-align: center;
       background: #007bff;
       color: white;
-      border-radius: 5px;
+      border-radius: 50%;
       margin: 2px;
+      cursor: pointer;
+      user-select: none;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="mb-4">六合彩号码推荐工具</h1>
+<div class="container">
 
-    <div class="mb-4">
-      <h5>🎯 最新开奖号码：</h5>
-      <div id="latestInfo" class="mb-2">加载中...</div>
-      <div id="latestNums"></div>
-    </div>
+  <h1 class="mb-4">六合彩号码推荐工具</h1>
 
-    <div class="mb-4">
-      <h5>📈 推荐号码：</h5>
-      <button class="btn btn-primary me-2" onclick="genAll()">生成推荐</button>
-      <button class="btn btn-secondary" onclick="refreshLatest()">刷新开奖</button>
-      <div class="mt-3"><strong>热号：</strong><span id="hot"></span></div>
-      <div class="mt-1"><strong>冷热混合：</strong><span id="mix"></span></div>
-      <div class="mt-1"><strong>随机推荐：</strong><span id="random"></span></div>
-    </div>
-
-    <div>
-      <h5>📊 热号走势图（最近100期）</h5>
-      <canvas id="freqChart" height="200"></canvas>
-    </div>
+  <div class="mb-4">
+    <h5>🎯 最新开奖号码：</h5>
+    <div id="latestInfo" class="mb-2">加载中...</div>
+    <div id="latestNums"></div>
   </div>
 
-  <script>
-    let historyData = [];
+  <div class="mb-4">
+    <h5>📈 推荐号码：</h5>
+    <div class="mb-2">
+      <button class="btn btn-primary me-2" onclick="genAll()">生成推荐</button>
+      <button class="btn btn-secondary me-2" onclick="refreshLatest()">刷新开奖</button>
+      <button class="btn btn-success" onclick="shareNumbers()">分享推荐</button>
+    </div>
+    <div class="mt-2"><strong>热号：</strong><span id="hot"></span></div>
+    <div class="mt-2"><strong>冷热混合：</strong><span id="mix"></span></div>
+    <div class="mt-2"><strong>随机推荐：</strong><span id="random"></span></div>
+  </div>
 
-    async function fetchLatest() {
-      try {
-        const res = await fetch('https://hk.marksixapi.com/latest');
-        const obj = await res.json();
-        const info = obj.data;
-        document.getElementById('latestInfo').textContent = `第 ${info.expect || info.issue || '-'} 期 - ${info.time || ''}`;
-        const nums = info.nums || (info.openCode ? info.openCode.split(',') : []);
-        document.getElementById('latestNums').innerHTML = nums.map(n => `<span class="number-box">${n}</span>`).join('');
-      } catch (e) {
-        document.getElementById('latestInfo').textContent = '加载失败';
-      }
-    }
+  <div class="mb-4">
+    <h5>📅 历史期号选择</h5>
+    <select id="historySelect" class="form-select w-auto d-inline-block" onchange="onSelectHistory()"></select>
+  </div>
 
-    async function fetchHistory() {
-      try {
-        const res = await fetch('https://hk.marksixapi.com/history?limit=100');
-        const obj = await res.json();
-        historyData = obj.data.map(e => e.nums.map(Number));
-        drawChart();
-      } catch (e) {
-        alert('历史数据获取失败');
-      }
-    }
+  <div class="mb-4">
+    <h5>📊 热号走势图（最近100期）</h5>
+    <canvas id="freqChart" height="200"></canvas>
+  </div>
 
-    function calcFreq() {
-      const freq = {};
-      for (let i = 1; i <= 49; i++) freq[i] = 0;
-      historyData.forEach(arr => arr.forEach(n => freq[n]++));
-      const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
-      const hot = sorted.slice(0, 6).map(e => +e[0]);
-      const cold = sorted.slice(-6).map(e => +e[0]);
-      return { hot, cold, freq };
-    }
+  <hr>
 
-    function genAll() {
-      const { hot, cold } = calcFreq();
-      document.getElementById('hot').innerHTML = hot.map(n => `<span class="number-box">${n}</span>`).join('');
-      const mix = [...hot.slice(0, 3), ...cold.slice(0, 3)].sort((a, b) => a - b);
-      document.getElementById('mix').innerHTML = mix.map(n => `<span class="number-box">${n}</span>`).join('');
-      const pool = Array.from({ length: 49 }, (_, i) => i + 1);
-      const rand = [];
-      while (rand.length < 6) {
-        const idx = Math.floor(Math.random() * pool.length);
-        rand.push(pool.splice(idx, 1)[0]);
-      }
-      document.getElementById('random').innerHTML = rand.sort((a, b) => a - b).map(n => `<span class="number-box">${n}</span>`).join('');
-    }
+  <div class="mt-4">
+    <h5>🧭 彩票说明</h5>
+    <p>六合彩（Mark Six）每期开奖 6 个号码 + 1 个特别号码，总号码范围 1–49。</p>
+    <ul>
+      <li>热号：在最近 100 期中最常开的 6 个号码。</li>
+      <li>冷号：最近 100 期中最少开的 6 个号码。</li>
+      <li>冷热混合：热号前三 + 冷号前三组合。</li>
+      <li>随机推荐：系统随机生成 6 个号码。</li>
+    </ul>
+    <p>⚠️ 本工具仅供参考，彩票属于随机风险，请谨慎对待。</p>
+  </div>
 
-    function refreshLatest() {
-      document.getElementById('latestInfo').textContent = '加载中...';
-      document.getElementById('latestNums').innerHTML = '';
-      fetchLatest();
-    }
+</div>
 
-    function drawChart() {
-      const { freq } = calcFreq();
-      const labels = Object.keys(freq);
-      const values = Object.values(freq);
-      new Chart(document.getElementById('freqChart'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: '出现次数',
-            data: values,
-            backgroundColor: '#007bff'
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    }
+<script>
+let historyData = [], historyIssues = [];
 
-    (async function () {
-      await fetchHistory();
-      await fetchLatest();
-    })();
-  </script>
+async function fetchLatest(){
+  try {
+    const res = await fetch('https://hk.marksixapi.com/latest');
+    const info = (await res.json()).data;
+    document.getElementById('latestInfo').textContent = `第 ${info.issue} 期 - ${info.time}`;
+    document.getElementById('latestNums').innerHTML = info.nums.map(n => `<span class="number-box" onclick="copyNum(${n})">${n}</span>`).join('');
+  } catch {
+    document.getElementById('latestInfo').textContent = '加载失败';
+  }
+}
+
+async function fetchHistory(){
+  try {
+    const res = await fetch('https://hk.marksixapi.com/history?limit=100');
+    const arr = (await res.json()).data;
+    historyData = arr.map(e => e.nums.map(Number));
+    historyIssues = arr.map(e => e.issue);
+    initHistorySelector();
+    drawChart();
+  } catch {
+    alert('历史数据获取失败');
+  }
+}
+
+function initHistorySelector(){
+  const sel = document.getElementById('historySelect');
+  sel.innerHTML = historyIssues.map((iss,i)=>`<option value="${i}">${historyIssues[i]}</option>`).join('');
+}
+
+function onSelectHistory(){
+  const idx = document.getElementById('historySelect').value;
+  const nums = historyData[idx];
+  alert(`第 ${historyIssues[idx]} 期 历史开奖号码：${nums.join(' ')}`);
+}
+
+function calcFreq(){
+  const freq = {};
+  for(let i=1;i<=49;i++) freq[i]=0;
+  historyData.forEach(arr=>arr.forEach(n=>freq[n]++));
+  const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  const hot = sorted.slice(0,6).map(e=>+e[0]), cold = sorted.slice(-6).map(e=>+e[0]);
+  return {hot,cold,freq};
+}
+
+function genAll(){
+  const {hot,cold} = calcFreq();
+  document.getElementById('hot').innerHTML = hot.map(n=>`<span class="number-box" onclick="copyNum(${n})">${n}</span>`).join('');
+  const mix = [...hot.slice(0,3),...cold.slice(0,3)].sort((a,b)=>a-b);
+  document.getElementById('mix').innerHTML = mix.map(n=>`<span class="number-box" onclick="copyNum(${n})">${n}</span>`).join('');
+  const pool = Array.from({length:49},(_,i)=>i+1);
+  const rand=[];
+  while(rand.length<6) rand.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+  document.getElementById('random').innerHTML = rand.sort((a,b)=>a-b).map(n=>`<span class="number-box" onclick="copyNum(${n})">${n}</span>`).join('');
+}
+
+function refreshLatest(){
+  document.getElementById('latestInfo').textContent='加载中...';
+  document.getElementById('latestNums').innerHTML='';
+  fetchLatest();
+}
+
+function shareNumbers(){
+  const hot = document.getElementById('hot').textContent;
+  const mix = document.getElementById('mix').textContent;
+  const rand = document.getElementById('random').textContent;
+  const text = `推荐号码\n热号：${hot}\n冷热混合：${mix}\n随机推荐：${rand}`;
+  navigator.clipboard.writeText(text).then(() => alert('推荐号码已复制到剪贴板！'));
+}
+
+function copyNum(n){
+  navigator.clipboard.writeText(n).then(() => alert(`已复制号码 ${n}`));
+}
+
+function drawChart(){
+  const {freq} = calcFreq();
+  new Chart(document.getElementById('freqChart'), {
+    type:'bar',
+    data:{
+      labels: Object.keys(freq),
+      datasets:[{label:'出现次数',data:Object.values(freq),backgroundColor:'#007bff'}]
+    },
+    options:{scales:{y:{beginAtZero:true}},responsive:true}
+  });
+}
+
+(async()=>{ await fetchHistory(); await fetchLatest(); })();
+</script>
 </body>
 </html>
