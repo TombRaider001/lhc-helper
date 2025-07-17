@@ -2,118 +2,76 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>六合彩開獎 & 推薦工具</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>六合彩開獎 + 推薦工具</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f3f3f3;
-      color: #222;
-      padding: 20px;
-      max-width: 720px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    .card {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin: 20px 0;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .btn {
-      padding: 8px 16px;
-      background: #007bff;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-      margin: 6px 0;
-    }
-    .btn-green {
-      background: #28a745;
-    }
-    .numbers {
-      margin-top: 8px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .ball {
-      display: inline-block;
-      padding: 10px 16px;
-      background: #2196f3;
-      color: white;
-      border-radius: 50%;
-      font-weight: bold;
-    }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; max-width:720px; margin:auto; }
+    h1, h2 { text-align:center; }
+    .card { background:white; padding:16px; border-radius:8px; margin:20px 0; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .btn { padding:10px 20px; background:#007BFF; color:#fff; border:none; border-radius:5px; cursor:pointer; margin:10px 0; }
+    .btn-green { background:#28A745 }
+    .ball { display:inline-block; width:36px;height:36px;line-height:36px;background:#2196F3;color:#fff;border-radius:50%;margin:4px; }
   </style>
 </head>
 <body>
 
-<h1>🎯 六合彩開獎 & 推薦工具</h1>
+  <h1>六合彩 開獎 & 推薦</h1>
 
-<div class="card">
-  <h3>📌 最近一期開獎號碼（來自 pilio 網站）</h3>
-  <button class="btn" onclick="loadData()">點擊獲取</button>
-  <div id="latestResult">尚未加載</div>
-</div>
-
-<div class="card">
-  <h3>✨ 推薦號碼</h3>
-  <button class="btn btn-green" onclick="generateRecommendations()">生成推薦</button>
-  <div>
-    熱號推薦：<div class="numbers" id="hot"></div>
-    冷熱混合：<div class="numbers" id="mix"></div>
-    隨機推薦：<div class="numbers" id="random"></div>
+  <div class="card">
+    <h2>📌 最新開獎號碼</h2>
+    <button class="btn" onclick="loadLatest()">點擊獲取</button>
+    <div id="latest" style="margin-top:10px;">-- 尚未獲取 --</div>
   </div>
-</div>
 
-<script>
-const proxyURL = 'https://frosty-fire-4725.jonbaby1126.workers.dev';
+  <div class="card">
+    <h2>✨ 推薦號碼</h2>
+    <button class="btn-green" onclick="generate()">生成推薦</button>
+    <div><strong>熱號：</strong><div id="hot"></div></div>
+    <div><strong>冷熱混合：</strong><div id="mix"></div></div>
+    <div><strong>隨機推薦：</strong><div id="random"></div></div>
+  </div>
 
-async function loadData() {
-  document.getElementById('latestResult').innerText = '加載中...';
-  try {
-    const res = await fetch(proxyURL);
-    const html = await res.text();
-    const numbers = [...html.matchAll(/\d{2}(?=<\/font><\/b><\/td>)/g)].map(m => m[0]).slice(0, 7);
-    document.getElementById('latestResult').innerHTML = numbers.map(n => `<span class="ball">${n}</span>`).join(' ');
-    window.allNumbers = extractAllNumbers(html);
-  } catch (e) {
-    document.getElementById('latestResult').innerText = '獲取失敗，請稍後重試。';
-  }
-}
+  <script>
+    let historyNums = [];
 
-function extractAllNumbers(html) {
-  const matches = [...html.matchAll(/\d{2}(?=<\/font><\/b><\/td>)/g)].map(m => m[0]);
-  return matches.slice(0, 100 * 7); // 100 期 x 7 號碼
-}
+    async function loadLatest(){
+      const out = document.getElementById('latest');
+      out.textContent = '加載中...';
+      try {
+        const proxy = 'https://corsproxy.io/?' + encodeURIComponent('https://www.pilio.idv.tw/ltohk/list.asp');
+        const res = await fetch(proxy);
+        const html = await res.text();
 
-function generateRecommendations() {
-  if (!window.allNumbers || window.allNumbers.length < 7) {
-    alert('請先加載最新開獎資料');
-    return;
-  }
-  const freq = {};
-  window.allNumbers.forEach(n => freq[n] = (freq[n] || 0) + 1);
-  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]).map(e => e[0]);
-  const hot = sorted.slice(0, 6);
-  const cold = sorted.slice(-6);
-  const mix = [...hot.slice(0,3), ...cold.slice(0,3)];
-  const rand = [];
-  while(rand.length < 6) {
-    const n = String(Math.floor(Math.random() * 49 + 1)).padStart(2, '0');
-    if (!rand.includes(n)) rand.push(n);
-  }
-  document.getElementById('hot').innerHTML = hot.map(n => `<span class="ball">${n}</span>`).join(' ');
-  document.getElementById('mix').innerHTML = mix.map(n => `<span class="ball">${n}</span>`).join(' ');
-  document.getElementById('random').innerHTML = rand.map(n => `<span class="ball">${n}</span>`).join(' ');
-}
-</script>
+        const regex = /<font color="#0000ff" size="2"><b>(\d{2})<\/b><\/font><\/td>/g;
+        const nums = [...html.matchAll(regex)].map(m => m[1]).slice(0,7);
+        historyNums = nums; // 只用最新一期数据
+        
+        out.innerHTML = nums.map(n=>`<span class="ball">${n}</span>`).join(' ');
+      } catch {
+        out.textContent = '獲取失敗，請稍後重試';
+      }
+    }
+
+    function generate(){
+      if (historyNums.length < 7) return alert('請先獲取最新開獎號碼');
+      const freq = {};
+      historyNums.forEach(n=> freq[n] = (freq[n]||0)+1);
+      for(let i=1;i<=49;i++){ const k=String(i).padStart(2,'0'); if(!freq[k]) freq[k]=0; }
+      const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+      const hot = sorted.slice(0,6);
+      const cold = sorted.slice(-6);
+      const mix = [...hot.slice(0,3),...cold.slice(0,3)];
+      const rand=[];
+      while(rand.length<6){
+        let r = String(Math.floor(Math.random()*49+1)).padStart(2,'0');
+        if(!rand.includes(r)) rand.push(r);
+      }
+
+      document.getElementById('hot').innerHTML = hot.map(n=>`<span class="ball">${n}</span>`).join(' ');
+      document.getElementById('mix').innerHTML = mix.map(n=>`<span class="ball">${n}</span>`).join(' ');
+      document.getElementById('random').innerHTML = rand.map(n=>`<span class="ball">${n}</span>`).join(' ');
+    }
+  </script>
 
 </body>
 </html>
