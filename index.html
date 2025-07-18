@@ -2,19 +2,51 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <title>六合彩热号冷号分析与推荐</title>
+  <title>新澳六合彩生肖推荐</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     h1 { text-align: center; }
-    .nums { font-size: 18px; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
-    .num { background: #007bff; color: white; border-radius: 6px; padding: 5px 12px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .nums { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .num {
+      background: #007bff;
+      color: white;
+      border-radius: 100%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .num span:first-child { font-size: 16px; font-weight: bold; }
     .recommend { background: #28a745; }
+    button {
+      display: block;
+      margin: 0 auto 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
   </style>
 </head>
 <body>
-  <h1>六合彩数据分析</h1>
+  <h1>新澳六合彩数据分析</h1>
+  <button onclick="analyze()">🔄 刷新推荐</button>
+
   <div class="card">
     <h2>🔥 热门号码 (Hot)</h2>
     <div class="nums" id="hot"></div>
@@ -29,46 +61,62 @@
   </div>
 
 <script>
-(async function() {
-  const res = await fetch("history100.json");
-  const data = await res.json();
-  const balls = [];
+let data = [];
+let numZodiacMap = {};
 
-  data.slice(0, 100).forEach(item => {
-    item.balls.split("-").forEach(b => balls.push(parseInt(b)));
+async function loadData() {
+  const res = await fetch("newao100-zodiac-final.json");
+  data = await res.json();
+  numZodiacMap = {};
+  data.forEach(item => {
+    item.balls.split('-').forEach((b, i) => {
+      numZodiacMap[parseInt(b)] = item.zodiacs[i];
+    });
+  });
+}
+
+function render(id, nums, extra = '') {
+  const box = document.getElementById(id);
+  box.innerHTML = '';
+  nums.forEach(n => {
+    const div = document.createElement('div');
+    div.className = 'num' + (extra ? ' ' + extra : '');
+    const numSpan = document.createElement('span');
+    const zodiacSpan = document.createElement('span');
+    numSpan.textContent = n.toString().padStart(2, '0');
+    zodiacSpan.textContent = numZodiacMap[n] || '';
+    div.appendChild(numSpan);
+    div.appendChild(zodiacSpan);
+    box.appendChild(div);
+  });
+}
+
+function analyze() {
+  if (!data.length) return;
+
+  const allNums = [];
+  data.forEach(item => {
+    item.balls.split('-').forEach(b => allNums.push(parseInt(b)));
   });
 
   const freq = Array(50).fill(0);
-  balls.forEach(n => freq[n]++);
+  allNums.forEach(n => freq[n]++);
+  const stat = freq.map((count, num) => ({num, count})).slice(1);
 
-  const numbered = freq.map((count, num) => ({num, count})).slice(1);
-  const hot = numbered.sort((a,b)=>b.count-a.count).slice(0, 10).map(x=>x.num);
-  const cold = numbered.sort((a,b)=>a.count-b.count).slice(0, 10).map(x=>x.num);
-
-  function render(ids, nums) {
-    const box = document.getElementById(ids);
-    nums.forEach(n => {
-      const span = document.createElement('span');
-      span.className = 'num';
-      span.textContent = n.toString().padStart(2,'0');
-      box.appendChild(span);
-    });
-  }
+  const hot = stat.slice().sort((a, b) => b.count - a.count).slice(0, 10).map(x => x.num);
+  const cold = stat.slice().sort((a, b) => a.count - b.count).slice(0, 10).map(x => x.num);
 
   render("hot", hot);
   render("cold", cold);
 
-  // 推荐号：4 热 + 3 冷，随机后取前 6 个
   const sample = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-  const recom = sample(hot, 4).concat(sample(cold, 3)).sort(() => Math.random()-0.5).slice(0,6).sort((a,b)=>a-b);
+  const recom = sample(hot, 4).concat(sample(cold, 3)).sort(() => Math.random() - 0.5).slice(0, 6).sort((a, b) => a - b);
+  render("recommend", recom, 'recommend');
+}
 
-  const rbox = document.getElementById("recommend");
-  recom.forEach(n => {
-    const span = document.createElement('span');
-    span.className = 'num recommend';
-    span.textContent = n.toString().padStart(2,'0');
-    rbox.appendChild(span);
-  });
+(async function(){
+  await loadData();
+  analyze();
 })();
 </script>
 </body>
