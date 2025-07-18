@@ -10,70 +10,73 @@
     body {
       margin: 0;
       padding: 20px;
-      font-family: "Segoe UI", sans-serif;
-      background: #f0f2f5;
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #e0f2f1);
       color: #333;
     }
     h1 {
       text-align: center;
       margin-bottom: 30px;
-      color: #1a1a1a;
-      font-size: 24px;
+      color: #00695c;
+      font-size: 28px;
+      font-weight: 700;
     }
     button {
       display: block;
-      margin: 0 auto 20px;
-      padding: 12px 24px;
+      margin: 0 auto 30px;
+      padding: 14px 28px;
       font-size: 16px;
       font-weight: bold;
-      background: linear-gradient(45deg, #007bff, #0056b3);
+      background: linear-gradient(45deg, #00796b, #004d40);
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       color: white;
       cursor: pointer;
-      transition: background 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
     }
     button:hover {
-      background: linear-gradient(45deg, #0056b3, #003d80);
+      background: linear-gradient(45deg, #004d40, #00251a);
     }
     .card {
-      background: #fff;
+      background: white;
       border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
     }
     .card h2 {
       margin-top: 0;
       font-size: 20px;
-      border-left: 4px solid #007bff;
-      padding-left: 10px;
+      color: #00796b;
+      border-left: 6px solid #004d40;
+      padding-left: 12px;
     }
     .nums {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 15px;
+      gap: 14px;
+      margin-top: 16px;
     }
     .num {
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #007bff, #3399ff);
+      background: linear-gradient(135deg, #26c6da, #00acc1);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      font-size: 17px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
     }
     .recommend {
-      background: linear-gradient(135deg, #28a745, #51c957);
+      background: linear-gradient(135deg, #66bb6a, #388e3c) !important;
     }
     canvas {
       max-width: 100%;
-      margin-top: 20px;
+      margin-top: 24px;
     }
   </style>
 </head>
@@ -123,7 +126,7 @@ function analyze() {
 
   const allNums = [];
   data.forEach(item => {
-    item.numbers.forEach(b => allNums.push(parseInt(b)));
+    (item.numbers || []).forEach(b => allNums.push(parseInt(b)));
   });
 
   const freq = Array(50).fill(0);
@@ -152,7 +155,7 @@ function analyze() {
       datasets: [{
         label: '出现次数',
         data: counts,
-        backgroundColor: 'rgba(54, 162, 235, 0.7)'
+        backgroundColor: 'rgba(33, 150, 243, 0.7)'
       }]
     },
     options: {
