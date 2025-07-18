@@ -3,8 +3,9 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <title>新澳六合彩生肖推荐</title>
+  <title>新澳六合彩推荐与统计</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
     h1 { text-align: center; }
@@ -23,12 +24,11 @@
       width: 48px;
       height: 48px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: bold;
     }
-    .num span:first-child { font-size: 16px; font-weight: bold; }
     .recommend { background: #28a745; }
     button {
       display: block;
@@ -42,10 +42,11 @@
       cursor: pointer;
     }
     button:hover { background: #0056b3; }
+    canvas { max-width: 100%; margin-top: 30px; }
   </style>
 </head>
 <body>
-  <h1>新澳六合彩数据分析</h1>
+  <h1>新澳六合彩推荐分析</h1>
   <button onclick="analyze()">🔄 刷新推荐</button>
 
   <div class="card">
@@ -61,19 +62,17 @@
     <div class="nums" id="recommend"></div>
   </div>
 
+  <div class="card">
+    <h2>📊 号码出现频率统计</h2>
+    <canvas id="frequencyChart"></canvas>
+  </div>
+
 <script>
 let data = [];
-let numZodiacMap = {};
 
 async function loadData() {
   const res = await fetch("newao100-zodiac-final.json");
   data = await res.json();
-  numZodiacMap = {};
-  data.forEach(item => {
-    item.balls.split('-').forEach((b, i) => {
-      numZodiacMap[parseInt(b)] = item.zodiacs[i];
-    });
-  });
 }
 
 function render(id, nums, extra = '') {
@@ -82,12 +81,7 @@ function render(id, nums, extra = '') {
   nums.forEach(n => {
     const div = document.createElement('div');
     div.className = 'num' + (extra ? ' ' + extra : '');
-    const numSpan = document.createElement('span');
-    const zodiacSpan = document.createElement('span');
-    numSpan.textContent = n.toString().padStart(2, '0');
-    zodiacSpan.textContent = numZodiacMap[n] || '';
-    div.appendChild(numSpan);
-    div.appendChild(zodiacSpan);
+    div.textContent = n.toString().padStart(2, '0');
     box.appendChild(div);
   });
 }
@@ -104,7 +98,7 @@ function analyze() {
   allNums.forEach(n => freq[n]++);
   const stat = freq.map((count, num) => ({num, count})).slice(1);
 
-  const hot = stat.slice().sort((a, b) => b.count - a.count).slice(0, 10).map(x => x.num);
+  const hot = stat.slice().sort((a, b) => b.count - a.count).slice(-10).map(x => x.num);
   const cold = stat.slice().sort((a, b) => a.count - b.count).slice(0, 10).map(x => x.num);
 
   render("hot", hot);
@@ -113,6 +107,33 @@ function analyze() {
   const sample = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
   const recom = sample(hot, 4).concat(sample(cold, 3)).sort(() => Math.random() - 0.5).slice(0, 6).sort((a, b) => a - b);
   render("recommend", recom, 'recommend');
+
+  // Chart render
+  const ctx = document.getElementById('frequencyChart').getContext('2d');
+  const nums = stat.map(x => x.num.toString().padStart(2, '0'));
+  const counts = stat.map(x => x.count);
+
+  if (window.freqChart) window.freqChart.destroy();
+  window.freqChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: nums,
+      datasets: [{
+        label: '出现次数',
+        data: counts,
+        backgroundColor: 'rgba(54, 162, 235, 0.7)'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
+        }
+      }
+    }
+  });
 }
 
 (async function(){
