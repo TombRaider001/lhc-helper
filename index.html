@@ -1,52 +1,84 @@
-
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>勇哥专用新澳六合彩推荐与统计</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
-    h1 { text-align: center; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #1a1a1a;
+      font-size: 24px;
+    }
+    button {
+      display: block;
+      margin: 0 auto 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: linear-gradient(45deg, #0056b3, #003d80);
+    }
     .card {
-      background: white;
-      border-radius: 12px;
+      background: #fff;
+      border-radius: 16px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .nums { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-left: 4px solid #007bff;
+      padding-left: 10px;
+    }
+    .nums {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 15px;
+    }
     .num {
-      background: #007bff;
-      color: white;
-      border-radius: 100%;
       width: 48px;
       height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #007bff, #3399ff);
+      color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
       font-weight: bold;
-    }
-    .recommend { background: #28a745; }
-    button {
-      display: block;
-      margin: 0 auto 30px;
-      padding: 10px 20px;
       font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
-    button:hover { background: #0056b3; }
-    canvas { max-width: 100%; margin-top: 30px; }
+    .recommend {
+      background: linear-gradient(135deg, #28a745, #51c957);
+    }
+    canvas {
+      max-width: 100%;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>新澳六合彩推荐分析</h1>
+  <h1>勇哥专用新澳六合彩推荐与统计</h1>
   <button onclick="analyze()">🔄 刷新推荐</button>
 
   <div class="card">
@@ -91,14 +123,14 @@ function analyze() {
 
   const allNums = [];
   data.forEach(item => {
-    item.balls.split('-').forEach(b => allNums.push(parseInt(b)));
+    item.numbers.forEach(b => allNums.push(parseInt(b)));
   });
 
   const freq = Array(50).fill(0);
   allNums.forEach(n => freq[n]++);
   const stat = freq.map((count, num) => ({num, count})).slice(1);
 
-  const hot = stat.slice().sort((a, b) => b.count - a.count).slice(-10).map(x => x.num);
+  const hot = stat.slice().sort((a, b) => b.count - a.count).slice(0, 10).map(x => x.num);
   const cold = stat.slice().sort((a, b) => a.count - b.count).slice(0, 10).map(x => x.num);
 
   render("hot", hot);
@@ -108,7 +140,6 @@ function analyze() {
   const recom = sample(hot, 4).concat(sample(cold, 3)).sort(() => Math.random() - 0.5).slice(0, 6).sort((a, b) => a - b);
   render("recommend", recom, 'recommend');
 
-  // Chart render
   const ctx = document.getElementById('frequencyChart').getContext('2d');
   const nums = stat.map(x => x.num.toString().padStart(2, '0'));
   const counts = stat.map(x => x.count);
