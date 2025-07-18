@@ -81,7 +81,7 @@
   </style>
 </head>
 <body>
-  <h1>勇哥专用新澳六合彩推荐与统计</h1>
+  <h1>新澳六合彩推荐分析</h1>
   <button onclick="analyze()">🔄 刷新推荐</button>
 
   <div class="card">
@@ -121,17 +121,29 @@ function render(id, nums, extra = '') {
   });
 }
 
+function sampleUnique(source, n, exclude = []) {
+  const filtered = source.filter(x => !exclude.includes(x));
+  return filtered.sort(() => 0.5 - Math.random()).slice(0, n);
+}
+
 function analyze() {
   if (!data.length) return;
 
   const allNums = [];
+  const allSpecials = [];
   data.forEach(item => {
-    (item.numbers || []).forEach(b => allNums.push(parseInt(b)));
+    const nums = item.numbers.map(n => parseInt(n));
+    nums.slice(0, 6).forEach(b => allNums.push(b));
+    allSpecials.push(parseInt(nums[6]));
   });
 
   const freq = Array(50).fill(0);
+  const freqSpecial = Array(50).fill(0);
   allNums.forEach(n => freq[n]++);
+  allSpecials.forEach(s => freqSpecial[s]++);
+
   const stat = freq.map((count, num) => ({num, count})).slice(1);
+  const statSpecial = freqSpecial.map((count, num) => ({num, count})).slice(1);
 
   const hot = stat.slice().sort((a, b) => b.count - a.count).slice(0, 10).map(x => x.num);
   const cold = stat.slice().sort((a, b) => a.count - b.count).slice(0, 10).map(x => x.num);
@@ -139,9 +151,17 @@ function analyze() {
   render("hot", hot);
   render("cold", cold);
 
-  const sample = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-  const recom = sample(hot, 4).concat(sample(cold, 3)).sort(() => Math.random() - 0.5).slice(0, 6).sort((a, b) => a - b);
-  render("recommend", recom, 'recommend');
+  // 推荐号：4 热 + 3 冷，去重后随机选 6 个正号 + 1 个特别号
+  const selectedHot = sampleUnique(hot, 4);
+  const selectedCold = sampleUnique(cold, 3, selectedHot);
+  const allSelected = selectedHot.concat(selectedCold);
+  const mainSix = allSelected.sort(() => Math.random() - 0.5).slice(0, 6).sort((a, b) => a - b);
+
+  const specialStat = statSpecial.sort((a, b) => b.count - a.count).slice(0, 10);
+  const specialHotPool = specialStat.map(x => x.num);
+  const specialBall = sampleUnique(specialHotPool, 1)[0];
+
+  render("recommend", mainSix.concat(["+", specialBall]), 'recommend');
 
   const ctx = document.getElementById('frequencyChart').getContext('2d');
   const nums = stat.map(x => x.num.toString().padStart(2, '0'));
